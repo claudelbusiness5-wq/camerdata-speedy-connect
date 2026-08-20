@@ -104,7 +104,7 @@ function Index() {
             variant="cta"
             size="xl"
             className="mt-7 w-full sm:w-auto"
-            onClick={() => buy(plans[1])}
+            onClick={() => buy(plans[1]!)}
           >
             Choisir mon forfait
           </Button>
