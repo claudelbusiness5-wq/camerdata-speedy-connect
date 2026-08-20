@@ -40,6 +40,12 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-mtn: var(--mtn);
+  --color-orange-brand: var(--orange-brand);
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-sans: "Manrope", system-ui, sans-serif;
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
@@ -62,21 +68,28 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --radius: 0.9rem;
+  --background: oklch(0.982 0.005 247.9);
+  --foreground: oklch(0.24 0.05 245);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
+  --card-foreground: oklch(0.24 0.05 245);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.24 0.05 245);
+  --primary: oklch(0.402 0.089 240.5);
+  --primary-foreground: oklch(0.99 0.005 240);
+  --secondary: oklch(0.955 0.012 240);
+  --secondary-foreground: oklch(0.402 0.089 240.5);
+  --muted: oklch(0.96 0.008 247.9);
+  --muted-foreground: oklch(0.52 0.03 247);
+  --accent: oklch(0.696 0.155 162.5);
+  --accent-foreground: oklch(0.99 0.01 160);
+  --success: oklch(0.696 0.155 162.5);
+  --success-foreground: oklch(0.99 0.01 160);
+  --mtn: oklch(0.86 0.17 95);
+  --orange-brand: oklch(0.72 0.18 55);
+  --gradient-hero: radial-gradient(1200px 600px at 15% -10%, color-mix(in oklab, var(--primary) 22%, transparent), transparent 60%), radial-gradient(900px 500px at 90% 0%, color-mix(in oklab, var(--accent) 20%, transparent), transparent 55%);
+  --shadow-soft: 0 18px 40px -22px color-mix(in oklab, var(--primary) 45%, transparent);
+  --shadow-glow: 0 20px 45px -18px color-mix(in oklab, var(--accent) 55%, transparent);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
   --border: oklch(0.929 0.013 255.508);
@@ -140,5 +153,101 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+  }
+}
+
+@utility glass {
+  background: color-mix(in oklab, white 55%, transparent);
+  backdrop-filter: blur(12px) saturate(140%);
+  border: 1px solid color-mix(in oklab, white 60%, transparent);
+  box-shadow: var(--shadow-soft);
+}
+
+@utility glass-subtle {
+  background: color-mix(in oklab, white 40%, transparent);
+  backdrop-filter: blur(12px) saturate(140%);
+  border: 1px solid color-mix(in oklab, white 50%, transparent);
+}
+
+@utility shimmer {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-120%);
+    background: linear-gradient(
+      100deg,
+      transparent 20%,
+      color-mix(in oklab, white 45%, transparent) 50%,
+      transparent 80%
+    );
+  }
+  &:hover::after {
+    animation: shimmer-sweep 0.9s ease-out;
+  }
+}
+
+@keyframes shimmer-sweep {
+  to {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility animate-marquee {
+  animation: marquee-scroll var(--marquee-duration, 30s) linear infinite;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-fade-up {
+  animation: fade-up 0.35s ease-out both;
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@utility animate-pop-in {
+  animation: pop-in 0.5s ease-out both;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
   }
 }
