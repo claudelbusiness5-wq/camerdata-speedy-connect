@@ -43,7 +43,12 @@
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-mtn: var(--mtn);
+  --color-mtn-blue: var(--mtn-blue);
+  --color-mtn-tint: var(--mtn-tint);
   --color-orange-brand: var(--orange-brand);
+  --color-orange-tint: var(--orange-tint);
+  --color-camtel: var(--camtel);
+  --color-camtel-tint: var(--camtel-tint);
   --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
   --font-sans: "Manrope", system-ui, sans-serif;
   --color-destructive: var(--destructive);
