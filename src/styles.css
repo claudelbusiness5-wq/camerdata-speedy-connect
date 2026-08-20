@@ -91,7 +91,13 @@
   --success: oklch(0.696 0.155 162.5);
   --success-foreground: oklch(0.99 0.01 160);
   --mtn: oklch(0.86 0.17 95);
+  --mtn-blue: oklch(0.42 0.13 250);
+  --mtn-tint: oklch(0.985 0.03 100);
   --orange-brand: oklch(0.72 0.18 55);
+  --orange-tint: oklch(0.975 0.017 60);
+  --camtel: oklch(0.53 0.16 250);
+  --camtel-tint: oklch(0.975 0.014 250);
+
   --gradient-hero: radial-gradient(1200px 600px at 15% -10%, color-mix(in oklab, var(--primary) 22%, transparent), transparent 60%), radial-gradient(900px 500px at 90% 0%, color-mix(in oklab, var(--accent) 20%, transparent), transparent 55%);
   --shadow-soft: 0 18px 40px -22px color-mix(in oklab, var(--primary) 45%, transparent);
   --shadow-glow: 0 20px 45px -18px color-mix(in oklab, var(--accent) 55%, transparent);
