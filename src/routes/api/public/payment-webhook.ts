@@ -45,7 +45,7 @@ export const Route = createFileRoute("/api/public/payment-webhook")({
 
         await supabaseAdmin
           .from("transactions")
-          .update({ statut, webhook_data: payload })
+          .update({ statut, webhook_data: payload as never })
           .eq("id", tx.id);
 
         // Idempotent : on n'active qu'une seule fois.
