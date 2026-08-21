@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2, ShieldCheck, Smartphone } from "lucide-react";
+import { ArrowLeft, AlertCircle, Loader2, ShieldCheck, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { OperatorLogo, operatorLabels, type OperatorId } from "@/components/OperatorLogo";
+import { initiatePayment } from "@/lib/payments.functions";
+import type { PlanId } from "@/lib/plans";
 
-export type Plan = { id: string; name: string; validity: string; price: number };
+export type Plan = { id: PlanId; name: string; validity: string; price: number };
+
 
 type SimOperator = "MTN" | "Orange" | null;
 
