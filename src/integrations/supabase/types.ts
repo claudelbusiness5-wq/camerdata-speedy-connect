@@ -14,7 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      transactions: {
+        Row: {
+          activated_at: string | null
+          created_at: string
+          forfait: string
+          id: string
+          merchant_invoice_id: string
+          mode: string
+          montant: number
+          numero_beneficiaire: string
+          numero_payeur: string | null
+          operateur: string
+          pay_url: string | null
+          payment_method: string | null
+          statut: string
+          transaction_uuid: string | null
+          updated_at: string
+          webhook_data: Json | null
+        }
+        Insert: {
+          activated_at?: string | null
+          created_at?: string
+          forfait: string
+          id?: string
+          merchant_invoice_id: string
+          mode?: string
+          montant: number
+          numero_beneficiaire: string
+          numero_payeur?: string | null
+          operateur: string
+          pay_url?: string | null
+          payment_method?: string | null
+          statut?: string
+          transaction_uuid?: string | null
+          updated_at?: string
+          webhook_data?: Json | null
+        }
+        Update: {
+          activated_at?: string | null
+          created_at?: string
+          forfait?: string
+          id?: string
+          merchant_invoice_id?: string
+          mode?: string
+          montant?: number
+          numero_beneficiaire?: string
+          numero_payeur?: string | null
+          operateur?: string
+          pay_url?: string | null
+          payment_method?: string | null
+          statut?: string
+          transaction_uuid?: string | null
+          updated_at?: string
+          webhook_data?: Json | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
