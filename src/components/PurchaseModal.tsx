@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2, ShieldCheck, Smartphone } from "lucide-react";
+import { ArrowLeft, AlertCircle, Loader2, ShieldCheck, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { OperatorLogo, operatorLabels, type OperatorId } from "@/components/OperatorLogo";
+import { initiatePayment } from "@/lib/payments.functions";
+import type { PlanId } from "@/lib/plans";
 
-export type Plan = { id: string; name: string; validity: string; price: number };
+export type Plan = { id: PlanId; name: string; validity: string; price: number };
+
 
 type SimOperator = "MTN" | "Orange" | null;
 
@@ -48,6 +51,7 @@ export function PurchaseModal({
   const [payer, setPayer] = useState("");
   const [method, setMethod] = useState<"MTN Mobile Money" | "Orange Money" | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -57,18 +61,36 @@ export function PurchaseModal({
       setPayer("");
       setMethod(null);
       setLoading(false);
+      setError(null);
     }
   }, [open, plan?.id, operator]);
 
   if (!plan) return null;
 
-  const submit = () => {
+  const submit = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setError(null);
+    try {
+      const res = await initiatePayment({
+        data: {
+          planId: plan.id,
+          operateur: op,
+          numeroBeneficiaire: target,
+          numeroPayeur: payer,
+          paymentMethod: method === "Orange Money" ? "orange_money" : "mtn_momo",
+        },
+      });
       setStep(5);
-    }, 1400);
+      window.location.href = res.pay_url;
+    } catch (e) {
+      console.error(e);
+      setError(
+        "Le paiement n'a pas pu être initié. Vérifiez vos informations et réessayez dans un instant.",
+      );
+      setLoading(false);
+    }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
