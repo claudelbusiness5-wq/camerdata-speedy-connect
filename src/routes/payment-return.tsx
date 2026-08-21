@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { getPaymentStatus } from "@/lib/payments.functions";
 
-type Search = { uuid?: string };
+type Search = { uuid?: string | undefined };
 
 export const Route = createFileRoute("/payment-return")({
   validateSearch: (search: Record<string, unknown>): Search => ({
