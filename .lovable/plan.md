@@ -1,36 +1,52 @@
-# Paiement CamerPay pour CamerData
+# Redirection vers la page de paiement CamerPay
 
-Objectif : brancher un vrai paiement Mobile Money (MTN / Orange) via CamerPay sur la landing page existante, avec suivi des transactions en base et activation du forfait après confirmation.
+## Objectif
 
-## Note sur la stack
+Faire du parcours hébergé par CamerPay le flux principal : après vérification du forfait et des numéros, CamerData crée la transaction, récupère l’URL de paiement CamerPay et redirige immédiatement l’utilisateur vers cette page. CamerPay renvoie ensuite l’utilisateur vers CamerData pour afficher le statut final.
 
-Le projet tourne sur TanStack Start (React + Tailwind) avec un backend intégré. Il n'y a donc pas de serveur Express séparé ni de MongoDB : le backend est écrit en fonctions serveur TypeScript dans le même projet, et la base de données est PostgreSQL via Lovable Cloud (à activer). Tous les endpoints demandés existent quand même, avec le même comportement et les mêmes URLs pour ce qui doit être public (webhook, page de retour).
+## Constat vérifié
 
-## Ce qui sera construit
+- La modale tente déjà une redirection vers le `pay_url` renvoyé par CamerPay.
+- La redirection ne se produit pas parce que l’appel d’initiation échoue avant de fournir cette URL.
+- Les journaux du site publié montrent actuellement une réponse HTTP `520` de CamerPay sur l’initiation.
 
-**1. Base de données** — table `transactions` :
-`id`, `transaction_uuid`, `merchant_invoice_id` (unique, clé d'idempotence), `numero_beneficiaire`, `numero_payeur`, `operateur`, `forfait`, `montant`, `payment_method`, `statut` (PENDING/PROCESSING/COMPLETED/FAILED/CANCELLED), `pay_url`, `webhook_data`, `created_at`, `updated_at`, `activated_at`.
-Accès verrouillé : aucune lecture publique de la table ; le suivi se fait par `transaction_uuid` via le backend uniquement.
+## Mise en œuvre
 
-**2. Backend**
-- `initiate-payment` : valide les entrées (numéro `+237 6XXXXXXXX`, montant correspondant au forfait), génère une référence `KMD-2026-XXXX`, crée la ligne PENDING, appelle CamerPay `POST /payment/initiate`, renvoie `transaction_uuid` + `pay_url`. Réutilise la transaction existante si la même référence est rejouée (idempotence). Retry réseau 3 tentatives.
-- `POST /api/public/payment-webhook` : endpoint public, vérifie la signature HMAC-SHA256 (`X-CamerPay-Signature`) en comparaison à temps constant sur le corps brut avant tout traitement, met à jour le statut, déclenche l'activation si `completed`, répond 200.
-- `payment-status` : lit la transaction et interroge CamerPay `GET /payment/{uuid}/status` en secours, sert au polling frontend.
-- `activate-forfait` : appelé après paiement confirmé ; simulation (délai 2 s) + horodatage `activated_at`, prêt à recevoir les API opérateurs plus tard.
-- Timeout : une transaction PENDING de plus de 10 minutes est marquée `FAILED` lors d'une consultation de statut.
-- Remboursement : prévu plus tard, non inclus dans cette étape.
+1. **Aligner l’initiation sur le contrat CamerPay de production**
+   - Vérifier l’URL d’initiation, les champs obligatoires, le format du numéro, la valeur de `source` et la forme exacte de la réponse avec la documentation et l’exemple du compte marchand.
+   - Envoyer uniquement les champs attendus pour le paiement hébergé MTN Mobile Money ou Orange Money.
+   - Accepter les variantes documentées du champ URL de paiement sans masquer une réponse invalide.
 
-**3. Frontend**
-- La modale d'achat existante conserve ses étapes, mais l'étape finale appelle réellement `initiate-payment`, affiche un loader ("Redirection vers CamerPay…") puis redirige vers `pay_url`.
-- Nouvelle page `/payment-return` : polling du statut avec spinner et compte à rebours, puis écran succès / échec / en attente, bouton retour à l'accueil.
-- Badge "MODE TEST" visible en haut de page quand CamerPay est en sandbox.
+2. **Fiabiliser la redirection vers CamerPay**
+   - Conserver le bouton de confirmation en état de chargement pendant la création du paiement.
+   - Dès qu’une URL CamerPay HTTPS valide est reçue, effectuer une navigation complète vers cette URL.
+   - Si CamerPay refuse l’initiation, rester dans la modale et afficher un message utile au lieu d’annoncer un envoi USSD qui n’a pas eu lieu.
 
-**4. Documentation** — un `README` d'intégration : création du compte CamerPay, obtention du token, configuration de l'URL de webhook, exemples cURL (initiation, statut, webhook signé), passage sandbox → production, quotas (30 req/min en sandbox).
+3. **Fiabiliser le retour vers CamerData**
+   - Fournir à CamerPay l’URL de retour publique `https://camer-data-plus.lovable.app/payment-return` et le callback `https://camer-data-plus.lovable.app/api/public/payment-webhook`.
+   - Adapter la page de retour aux identifiants réellement renvoyés par CamerPay (`transaction_uuid` ou référence marchande), puis lancer le suivi du statut.
+   - Afficher distinctement paiement confirmé, en attente, annulé ou échoué.
 
-## Sécurité
+4. **Diagnostic exploitable sans fuite de données**
+   - Journaliser côté serveur le statut HTTP et la structure non sensible de la réponse CamerPay.
+   - Remonter au client une erreur claire et sûre, tout en gardant le token API et les données sensibles exclusivement côté serveur.
 
-Le token API et le secret HMAC sont stockés dans le coffre de secrets du projet (jamais dans le code, jamais exposés au navigateur). Le montant est toujours recalculé côté serveur à partir du forfait choisi, jamais accepté depuis le client. Limitation de débit sur l'initiation de paiement.
+5. **Validation du parcours de production**
+   - Tester une initiation MTN et une initiation Orange depuis le site publié.
+   - Confirmer l’ouverture réelle de la page hébergée CamerPay, puis le retour sur CamerData.
+   - Vérifier que le webhook met à jour la même transaction et que le polling termine correctement.
 
-## Ce qu'il me faudra de vous
+## Détails techniques
 
-Après validation du plan, j'activerai Lovable Cloud puis vous demanderai, via le formulaire sécurisé, `CAMERPAY_API_TOKEN` et `CAMERPAY_WEBHOOK_SECRET`. Je vous fournirai l'URL exacte du webhook à coller dans votre tableau de bord CamerPay.
+- Le montant restera recalculé côté serveur depuis le catalogue CamerData.
+- La transaction sera créée en `PENDING`, passera en `PROCESSING` uniquement après réception d’un identifiant et d’une URL CamerPay valides, puis sera finalisée par webhook ou interrogation de statut.
+- La destination de redirection sera validée comme URL HTTPS CamerPay avant navigation.
+- Les fonctions serveur resteront des wrappers minces ; les schémas et helpers d’exécution seront isolés dans des modules adaptés au serveur.
+
+## Résultat attendu
+
+```text
+CamerData → confirmation → page de paiement CamerPay
+           ← retour client ← paiement manuel MTN/Orange
+           ← webhook signé ← confirmation CamerPay
+```
