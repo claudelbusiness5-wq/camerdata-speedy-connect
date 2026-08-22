@@ -87,6 +87,7 @@ const activities = [
 ];
 
 function Index() {
+  const { sandbox } = Route.useLoaderData();
   const [plan, setPlan] = useState<Plan | null>(null);
   const [operator, setOperator] = useState<OperatorId>("mtn");
   const [open, setOpen] = useState(false);
