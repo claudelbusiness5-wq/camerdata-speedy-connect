@@ -1,156 +1,87 @@
-# CamerData Speedy Connect
+# CamerData — intégration CamerPay
 
-Agis comme un expert en UI/UX et en développement Frontend. Crée une landing page one-page, moderne, simple et facile à comprendre, pour une plateforme de recharge de forfaits internet au Cameroun. 
+Plateforme de recharge de forfaits internet (MTN, Orange, CAMTEL) avec paiement
+Mobile Money via [CamerPay](https://camerpay.biz), en mode redirection.
 
+## 1. Compte CamerPay
 
+1. Créez un compte marchand sur https://camerpay.biz.
+2. Dans le tableau de bord, section **API**, générez un **token API** (sandbox puis production).
+3. Générez (ou choisissez) un **secret de webhook** — une chaîne aléatoire forte, par ex.
+   `openssl rand -hex 32`. La même valeur doit être enregistrée des deux côtés.
 
-**CONTRAINTES STRICTES :**
+## 2. Secrets à configurer dans le projet
 
-- NE PAS utiliser la couleur rouge nulle part.
+| Nom | Rôle |
+| --- | --- |
+| `CAMERPAY_API_TOKEN` | Token Bearer pour appeler l'API CamerPay |
+| `CAMERPAY_WEBHOOK_SECRET` | Secret HMAC-SHA256 de vérification du webhook |
+| `CAMERPAY_MODE` (optionnel) | `sandbox` (défaut) ou `production` |
+| `CAMERPAY_API_URL` (optionnel) | Défaut `https://camerpay.biz/api` |
+| `MERCHANT_CALLBACK_URL` (optionnel) | Écrase l'URL de webhook déduite |
+| `MERCHANT_RETURN_URL` (optionnel) | Écrase l'URL de retour déduite |
 
-- NE PAS inclure de bouton WhatsApp.
+Les secrets ne sont jamais dans le code : ils sont stockés chiffrés et injectés
+côté serveur uniquement.
 
-- NE PAS inclure de case à cocher "C'est mon numéro" dans le formulaire.
+## 3. URLs à renseigner dans CamerPay
 
-- Les seuls moyens de paiement acceptés sont : MTN Mobile Money et Orange Money.
+- Webhook (callback) : `https://camer-data-plus.lovable.app/api/public/payment-webhook`
+- Retour client : `https://camer-data-plus.lovable.app/payment-return`
 
-- Le design doit être "Mobile-First" mais parfaitement responsive sur desktop.
+En préversion : `https://project--084b9a85-7c66-46e0-b121-e3e1ef8de5ce-dev.lovable.app/...`
 
+## 4. Parcours de paiement
 
+1. L'utilisateur choisit un opérateur puis un forfait, saisit le numéro à recharger,
+   le moyen de paiement et le numéro à débiter.
+2. `initiatePayment` (fonction serveur) valide les entrées, **recalcule le montant
+   côté serveur** à partir du forfait, crée une transaction `PENDING` avec une
+   référence `KMD-<année>-<id>`, puis appelle CamerPay.
+3. Le client est redirigé vers `pay_url` (page CamerPay).
+4. CamerPay appelle le webhook signé ; le statut est mis à jour et le forfait activé
+   une seule fois (idempotent).
+5. Le client revient sur `/payment-return`, qui interroge le statut en polling.
+   Une transaction non confirmée après 10 minutes passe en `FAILED`.
 
-**SYSTÈME DE DESIGN & EFFETS VISUELS :**
+## 5. Exemples cURL
 
-- Palette de couleurs : 
+Statut d'une transaction (API CamerPay) :
 
-  - Primaire : Bleu Sarcelle profond (Deep Teal, ex: #0F4C75) pour la confiance et la neutralité.
+```bash
+curl -H "Authorization: Bearer $CAMERPAY_API_TOKEN" \
+  https://camerpay.biz/api/payment/<transaction_uuid>/status
+```
 
-  - Accent : Vert Émeraude (ex: #10B981) pour tous les boutons d'action (Acheter, Continuer, Payer) pour évoquer le succès et l'argent.
+Simuler un webhook signé vers l'application :
 
-  - Fond : Gris très clair / Blanc cassé (ex: #F8FAFC) avec de subtils dégradés.
+```bash
+BODY='{"transaction_uuid":"<uuid>","status":"completed"}'
+SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$CAMERPAY_WEBHOOK_SECRET" -hex | awk '{print $2}')
 
-- Effet Glassmorphism : Utilise `backdrop-filter: blur(12px)`, des fonds semi-transparents (`bg-white/40` ou `bg-white/60`), et des bordures fines et subtiles (`border border-white/30`) pour les cartes de forfaits et les modales.
+curl -X POST https://camer-data-plus.lovable.app/api/public/payment-webhook \
+  -H "Content-Type: application/json" \
+  -H "X-CamerPay-Event: payment.completed" \
+  -H "X-CamerPay-Signature: $SIG" \
+  -d "$BODY"
+```
 
-- Effet de brillance (Shimmer) : Ajoute une animation de reflet lumineux subtil qui traverse les boutons d'action principaux (CTA) au survol, pour un aspect premium et fintech.
+Une signature invalide renvoie `401`.
 
+## 6. Passage sandbox → production
 
+1. Remplacez `CAMERPAY_API_TOKEN` par le token de production.
+2. Mettez `CAMERPAY_MODE` à `production` (le bandeau « Mode test » disparaît).
+3. Mettez à jour les URLs de webhook/retour dans le tableau de bord CamerPay avec
+   le domaine de production.
+4. Faites une transaction réelle de faible montant pour valider le bout en bout.
 
-**STRUCTURE DE LA PAGE (One-Page) :**
+Quota sandbox : environ 30 requêtes/minute. Les appels sortants réessaient 3 fois
+avec backoff en cas d'erreur réseau ou 5xx.
 
+## 7. Développement
 
-
-1. **HEADER :** 
-
-   - Simple et épuré. Logo à gauche (texte "CamerData" ou placeholder). 
-
-   - Pas de menu de navigation complexe, juste un lien "Support" vers un email.
-
-
-
-2. **BANDE FILANTE DE MARQUE (Juste sous le header) :**
-
-   - Un composant "Marquee" (défilement infini horizontal lent et fluide).
-
-   - Contenu : Placeholders pour des logos de confiance (ex: "Logo Partenaire 1", "Logo Partenaire 2", "Paiement 100% Sécurisé", "SSL Encrypté"). Cela doit renforcer la crédibilité immédiatement.
-
-
-
-3. **SECTION HÉRO (Hero) :**
-
-   - Titre principal : "Rechargez votre forfait internet en 30 secondes."
-
-   - Sous-titre : "MTN, Orange et CAMTEL. Paiement instantané et sécurisé via Mobile Money."
-
-   - Badge de confiance proéminent avec icône de vérification : "✅ +250 activations effectuées avec succès".
-
-
-
-4. **BANDE FILANTE D'ACTIVITÉ EN TEMPS RÉEL :**
-
-   - Une barre fine et élégante (style glassmorphism) juste au-dessus ou en dessous des forfaits.
-
-   - Animation de défilement ou de notification type "toast" qui affiche des messages aléatoires comme : 
-
-     "🟢 67 ** ** 89 vient d'activer 7 Go à l'instant"
-
-     "🟢 69 ** ** 12 vient d'activer le forfait Illimité"
-
-     "🟢 65 ** ** 45 vient d'activer 30 Go"
-
-
-
-5. **SECTION DES FORFAITS (Le cœur de l'app) :**
-
-   - 3 cartes au design glassmorphism, alignées proprement.
-
-   - Carte 1 : "7 Go" | "Validité : 7 jours" | "1 200 FCFA" | Bouton Vert "Acheter".
-
-   - Carte 2 (Mise en avant "Populaire" avec un petit badge et une bordure verte subtile) : "30 Go" | "Validité : 30 jours" | "2 500 FCFA" | Bouton Vert "Acheter".
-
-   - Carte 3 : "Illimité" | "Validité : 30 jours" | "5 000 FCFA" | Bouton Vert "Acheter".
-
-
-
-6. **SECTION "COMMENT ÇA MARCHE ?" :**
-
-   - 3 étapes avec des icônes minimalistes :
-
-     1. Choisissez (Sélectionnez votre forfait)
-
-     2. Payez (Via MTN MoMo ou Orange Money)
-
-     3. Recevez (Activation instantanée par SMS)
-
-
-
-7. **MODALE / FLUX DE PAIEMENT (Simulé au clic sur "Acheter") :**
-
-   - Étape 1 : Champ "Numéro à recharger" avec indicatif +237 pré-rempli. (Ajoute une logique simple : si le numéro commence par 67/68, affiche l'icône MTN ; si 65/69, affiche l'icône Orange).
-
-   - Étape 2 : Choix du moyen de paiement (Deux gros boutons clairs : "MTN Mobile Money" et "Orange Money").
-
-   - Étape 3 : Champ "Numéro à débiter" (pour entrer le numéro qui va payer, sans aucune case à cocher de sauvegarde).
-
-   - Étape 4 : Récapitulatif (Total à payer : XXXX FCFA) et un grand bouton vert brillant "Obtenir mon forfait".
-
-   - Étape 5 : Écran de succès avec animation : "✅ Vérifiez votre téléphone. Un message de validation a été envoyé."
-
-
-
-8. **FOOTER :**
-
-   - Minimaliste. "© 2026 CamerData. Tous droits réservés."
-
-   - Email de support : support@camerdata.cm
-
-   - Aucun bouton flottant, aucun lien WhatsApp.
-
-
-
-**TECHNIQUE :**
-
-- Utilise React, Tailwind CSS, et Framer Motion (ou des animations CSS natives) pour les effets de brillance (shimmer) et les bandes filantes (marquee).
-
-- Assure-toi que les contrastes sont excellents pour la lisibilité.
-
-- Les transitions entre les étapes de la modale doivent être fluides (fade in/out).
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/084b9a85-7c66-46e0-b121-e3e1ef8de5ce).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+```bash
+bun install
+bun run dev
 ```
