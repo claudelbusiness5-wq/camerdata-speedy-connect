@@ -3,16 +3,20 @@ import { getRequestUrl } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { LOCAL_PHONE_REGEX, PLAN_CATALOG, OPERATOR_LABELS } from "@/lib/plans";
 
-const initiateSchema = z.object({
-  planId: z.enum(["7go", "30go", "illimite"]),
-  operateur: z.enum(["mtn", "orange", "camtel"]),
-  numeroBeneficiaire: z.string().regex(LOCAL_PHONE_REGEX, "Numéro bénéficiaire invalide"),
-  numeroPayeur: z.string().regex(LOCAL_PHONE_REGEX, "Numéro payeur invalide"),
-  paymentMethod: z.enum(["mtn_momo", "orange_money"]),
-});
-
 export const initiatePayment = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => initiateSchema.parse(data))
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        planId: z.enum(["7go", "30go", "illimite"]),
+        operateur: z.enum(["mtn", "orange", "camtel"]),
+        numeroBeneficiaire: z
+          .string()
+          .regex(LOCAL_PHONE_REGEX, "Numéro bénéficiaire invalide"),
+        numeroPayeur: z.string().regex(LOCAL_PHONE_REGEX, "Numéro payeur invalide"),
+        paymentMethod: z.enum(["mtn_momo", "orange_money"]),
+      })
+      .parse(data),
+  )
   .handler(async ({ data }) => {
     const {
       getCamerPayConfig,
