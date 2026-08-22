@@ -20,7 +20,6 @@ export const initiatePayment = createServerFn({ method: "POST" })
       getCamerPayConfig,
       camerpayInitiate,
       isSandbox,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } = await import("@/lib/camerpay.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const origin = new URL(getRequestUrl()).origin;
