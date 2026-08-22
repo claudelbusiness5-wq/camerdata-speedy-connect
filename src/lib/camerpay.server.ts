@@ -69,8 +69,10 @@ export async function camerpayInitiate(
     headers: {
       Authorization: `Bearer ${config.token}`,
       "Content-Type": "application/json",
+      Accept: "application/json",
       "Idempotency-Key": payload.merchant_invoice_id,
     },
+
     body: JSON.stringify({
       amount: payload.amount,
       currency: "XAF",
@@ -82,12 +84,30 @@ export async function camerpayInitiate(
     }),
   });
 
-  const body = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+  const rawText = await res.text().catch(() => "");
+  let body: Record<string, unknown> | null = null;
+  try {
+    body = JSON.parse(rawText) as Record<string, unknown>;
+  } catch {
+    body = null;
+  }
 
   if (!res.ok || !body) {
-    console.error("CamerPay initiate failed", res.status, body);
-    throw new Error("Le service de paiement a refusé la transaction.");
+    console.error(
+      "CamerPay initiate failed",
+      res.status,
+      res.headers.get("content-type"),
+      rawText.slice(0, 500),
+    );
+    const apiMessage =
+      body && typeof body["message"] === "string" ? (body["message"] as string) : "";
+    throw new Error(
+      apiMessage
+        ? `CamerPay: ${apiMessage}`
+        : "Le service de paiement a refusé la transaction (réponse invalide).",
+    );
   }
+
 
   const data = ((body["data"] as Record<string, unknown>) ?? body) as Record<string, unknown>;
   const uuid = (data["transaction_uuid"] ?? data["uuid"] ?? data["id"]) as string | undefined;
