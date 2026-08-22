@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, AlertCircle, Loader2, ShieldCheck, Smartphone } from "lucide-react";
+import {
+  ArrowLeft,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  ShieldCheck,
+  Smartphone,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { OperatorLogo, operatorLabels, type OperatorId } from "@/components/OperatorLogo";
@@ -248,6 +255,12 @@ export function PurchaseModal({
                     </span>
                   </div>
                 </div>
+                {error && (
+                  <p className="flex items-start gap-2 rounded-xl border border-border bg-secondary p-3 text-xs text-primary">
+                    <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                    {error}
+                  </p>
+                )}
                 <Button
                   variant="cta"
                   size="xl"
