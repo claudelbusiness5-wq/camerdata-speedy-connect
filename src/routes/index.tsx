@@ -6,6 +6,7 @@ import { Marquee } from "@/components/Marquee";
 import { Navbar } from "@/components/Navbar";
 import { OperatorLogo, type OperatorId } from "@/components/OperatorLogo";
 import { PurchaseModal, type Plan } from "@/components/PurchaseModal";
+import { getPaymentMode } from "@/lib/payments.functions";
 import image1 from "@/assets/image1.jpg";
 import image2 from "@/assets/image2.jpg";
 import image3 from "@/assets/image3.jpg";
@@ -36,7 +37,6 @@ export const Route = createFileRoute("/")({
       return { sandbox: true };
     }
   },
-  errorComponent: () => <Index />,
   component: Index,
 });
 
