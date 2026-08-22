@@ -16,11 +16,8 @@ export const initiatePayment = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data }) => {
-    const {
-      getCamerPayConfig,
-      camerpayInitiate,
-      isSandbox,
-    } = await import("@/lib/camerpay.server");
+    const { getCamerPayConfig, camerpayInitiate, isSandbox } =
+      await import("@/lib/camerpay.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const origin = new URL(getRequestUrl()).origin;
     const config = getCamerPayConfig(origin);
