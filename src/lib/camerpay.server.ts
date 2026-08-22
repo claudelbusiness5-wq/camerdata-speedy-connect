@@ -69,18 +69,17 @@ export async function camerpayInitiate(
     headers: {
       Authorization: `Bearer ${config.token}`,
       "Content-Type": "application/json",
-      Accept: "application/json",
-      "Idempotency-Key": payload.merchant_invoice_id,
     },
 
     body: JSON.stringify({
+      payment_method: payload.payment_method,
       amount: payload.amount,
       currency: "XAF",
       customer_phone: payload.customer_phone,
       merchant_invoice_id: payload.merchant_invoice_id,
       merchant_callback_url: config.callbackUrl,
       merchant_return_url: config.returnUrl,
-      ...(payload.payment_method ? { payment_method: payload.payment_method } : {}),
+      source: "api",
     }),
   });
 
@@ -107,7 +106,6 @@ export async function camerpayInitiate(
         : "Le service de paiement a refusé la transaction (réponse invalide).",
     );
   }
-
 
   const data = ((body["data"] as Record<string, unknown>) ?? body) as Record<string, unknown>;
   const uuid = (data["transaction_uuid"] ?? data["uuid"] ?? data["id"]) as string | undefined;

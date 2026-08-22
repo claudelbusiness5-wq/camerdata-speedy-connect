@@ -3,26 +3,22 @@ import { getRequestUrl } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { LOCAL_PHONE_REGEX, PLAN_CATALOG, OPERATOR_LABELS } from "@/lib/plans";
 
-const initiateSchema = z.object({
-  planId: z.enum(["7go", "30go", "illimite"]),
-  operateur: z.enum(["mtn", "orange", "camtel"]),
-  numeroBeneficiaire: z.string().regex(LOCAL_PHONE_REGEX, "Numéro bénéficiaire invalide"),
-  numeroPayeur: z.string().regex(LOCAL_PHONE_REGEX, "Numéro payeur invalide"),
-  paymentMethod: z.enum(["mtn_momo", "orange_money"]),
-});
-
 export const initiatePayment = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => initiateSchema.parse(data))
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        planId: z.enum(["7go", "30go", "illimite"]),
+        operateur: z.enum(["mtn", "orange", "camtel"]),
+        numeroBeneficiaire: z.string().regex(LOCAL_PHONE_REGEX, "Numéro bénéficiaire invalide"),
+        numeroPayeur: z.string().regex(LOCAL_PHONE_REGEX, "Numéro payeur invalide"),
+        paymentMethod: z.enum(["mtn_momo", "orange_money"]),
+      })
+      .parse(data),
+  )
   .handler(async ({ data }) => {
-    const {
-      getCamerPayConfig,
-      camerpayInitiate,
-      isSandbox,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } = await import("@/lib/camerpay.server");
+    const { getCamerPayConfig, camerpayInitiate, isSandbox } =
+      await import("@/lib/camerpay.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { toInternational } = await import("@/lib/plans");
-
     const origin = new URL(getRequestUrl()).origin;
     const config = getCamerPayConfig(origin);
 
@@ -56,7 +52,8 @@ export const initiatePayment = createServerFn({ method: "POST" })
     try {
       const result = await camerpayInitiate(config, {
         amount: montant,
-        customer_phone: toInternational(data.numeroPayeur),
+        // CamerPay attend le format local camerounais à 9 chiffres (6XXXXXXXX).
+        customer_phone: data.numeroPayeur,
         merchant_invoice_id: reference,
         payment_method: data.paymentMethod,
       });
@@ -88,9 +85,8 @@ export const initiatePayment = createServerFn({ method: "POST" })
 export const getPaymentStatus = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ uuid: z.string().min(6).max(120) }).parse(data))
   .handler(async ({ data }) => {
-    const { getCamerPayConfig, camerpayStatus, mapStatus, activateForfait } = await import(
-      "@/lib/camerpay.server"
-    );
+    const { getCamerPayConfig, camerpayStatus, mapStatus, activateForfait } =
+      await import("@/lib/camerpay.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: tx } = await supabaseAdmin
