@@ -69,8 +69,10 @@ export async function camerpayInitiate(
     headers: {
       Authorization: `Bearer ${config.token}`,
       "Content-Type": "application/json",
+      Accept: "application/json",
       "Idempotency-Key": payload.merchant_invoice_id,
     },
+
     body: JSON.stringify({
       amount: payload.amount,
       currency: "XAF",
