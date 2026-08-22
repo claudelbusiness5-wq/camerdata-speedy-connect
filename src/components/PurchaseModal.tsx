@@ -255,6 +255,12 @@ export function PurchaseModal({
                     </span>
                   </div>
                 </div>
+                {error && (
+                  <p className="flex items-start gap-2 rounded-xl border border-border bg-secondary p-3 text-xs text-primary">
+                    <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                    {error}
+                  </p>
+                )}
                 <Button
                   variant="cta"
                   size="xl"
