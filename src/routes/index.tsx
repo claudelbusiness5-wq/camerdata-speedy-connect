@@ -110,6 +110,12 @@ function Index() {
     <div id="top" className="min-h-screen bg-background text-foreground">
       <Navbar />
 
+      {sandbox && (
+        <div className="fixed top-[70px] right-0 left-0 z-40 bg-accent py-1.5 text-center text-[11px] font-bold tracking-wide text-primary-foreground uppercase">
+          Mode test — aucun paiement réel n'est débité
+        </div>
+      )}
+
       <main>
         <div style={{ backgroundImage: "var(--gradient-hero)" }} className="pt-[70px]">
           <section className="mx-auto max-w-3xl px-5 pt-12 pb-10 text-center sm:pt-16">
