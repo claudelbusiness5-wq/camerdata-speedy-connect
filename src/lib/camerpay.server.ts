@@ -107,7 +107,6 @@ export async function camerpayInitiate(
     );
   }
 
-
   const data = ((body["data"] as Record<string, unknown>) ?? body) as Record<string, unknown>;
   const uuid = (data["transaction_uuid"] ?? data["uuid"] ?? data["id"]) as string | undefined;
   const payUrl = (data["pay_url"] ?? data["payment_url"] ?? data["url"]) as string | undefined;

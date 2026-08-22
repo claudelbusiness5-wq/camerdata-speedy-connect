@@ -9,9 +9,7 @@ export const initiatePayment = createServerFn({ method: "POST" })
       .object({
         planId: z.enum(["7go", "30go", "illimite"]),
         operateur: z.enum(["mtn", "orange", "camtel"]),
-        numeroBeneficiaire: z
-          .string()
-          .regex(LOCAL_PHONE_REGEX, "Numéro bénéficiaire invalide"),
+        numeroBeneficiaire: z.string().regex(LOCAL_PHONE_REGEX, "Numéro bénéficiaire invalide"),
         numeroPayeur: z.string().regex(LOCAL_PHONE_REGEX, "Numéro payeur invalide"),
         paymentMethod: z.enum(["mtn_momo", "orange_money"]),
       })
@@ -91,9 +89,8 @@ export const initiatePayment = createServerFn({ method: "POST" })
 export const getPaymentStatus = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ uuid: z.string().min(6).max(120) }).parse(data))
   .handler(async ({ data }) => {
-    const { getCamerPayConfig, camerpayStatus, mapStatus, activateForfait } = await import(
-      "@/lib/camerpay.server"
-    );
+    const { getCamerPayConfig, camerpayStatus, mapStatus, activateForfait } =
+      await import("@/lib/camerpay.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: tx } = await supabaseAdmin
