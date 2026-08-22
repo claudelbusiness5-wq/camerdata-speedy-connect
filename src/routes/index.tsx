@@ -29,6 +29,14 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  loader: async () => {
+    try {
+      return await getPaymentMode();
+    } catch {
+      return { sandbox: true };
+    }
+  },
+  errorComponent: () => <Index />,
   component: Index,
 });
 
