@@ -145,3 +145,9 @@ export const getPaymentStatus = createServerFn({ method: "POST" })
       activated: Boolean(tx.activated_at) || statut === "COMPLETED",
     };
   });
+
+/** Indique si CamerPay tourne en sandbox (aucune donnée sensible exposée). */
+export const getPaymentMode = createServerFn({ method: "GET" }).handler(async () => {
+  const { isSandbox } = await import("@/lib/camerpay.server");
+  return { sandbox: isSandbox() };
+});

@@ -6,6 +6,7 @@ import { Marquee } from "@/components/Marquee";
 import { Navbar } from "@/components/Navbar";
 import { OperatorLogo, type OperatorId } from "@/components/OperatorLogo";
 import { PurchaseModal, type Plan } from "@/components/PurchaseModal";
+import { getPaymentMode } from "@/lib/payments.functions";
 import image1 from "@/assets/image1.jpg";
 import image2 from "@/assets/image2.jpg";
 import image3 from "@/assets/image3.jpg";
@@ -29,6 +30,13 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  loader: async () => {
+    try {
+      return await getPaymentMode();
+    } catch {
+      return { sandbox: true };
+    }
+  },
   component: Index,
 });
 
@@ -87,6 +95,7 @@ const activities = [
 ];
 
 function Index() {
+  const { sandbox } = Route.useLoaderData();
   const [plan, setPlan] = useState<Plan | null>(null);
   const [operator, setOperator] = useState<OperatorId>("mtn");
   const [open, setOpen] = useState(false);
@@ -100,6 +109,12 @@ function Index() {
   return (
     <div id="top" className="min-h-screen bg-background text-foreground">
       <Navbar />
+
+      {sandbox && (
+        <div className="fixed top-[70px] right-0 left-0 z-40 bg-accent py-1.5 text-center text-[11px] font-bold tracking-wide text-primary-foreground uppercase">
+          Mode test — aucun paiement réel n'est débité
+        </div>
+      )}
 
       <main>
         <div style={{ backgroundImage: "var(--gradient-hero)" }} className="pt-[70px]">
