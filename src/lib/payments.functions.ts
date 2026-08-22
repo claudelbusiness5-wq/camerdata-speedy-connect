@@ -21,8 +21,6 @@ export const initiatePayment = createServerFn({ method: "POST" })
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } = await import("@/lib/camerpay.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { toInternational } = await import("@/lib/plans");
-
     const origin = new URL(getRequestUrl()).origin;
     const config = getCamerPayConfig(origin);
 
@@ -56,7 +54,8 @@ export const initiatePayment = createServerFn({ method: "POST" })
     try {
       const result = await camerpayInitiate(config, {
         amount: montant,
-        customer_phone: toInternational(data.numeroPayeur),
+        // CamerPay attend le format local camerounais à 9 chiffres (6XXXXXXXX).
+        customer_phone: data.numeroPayeur,
         merchant_invoice_id: reference,
         payment_method: data.paymentMethod,
       });
