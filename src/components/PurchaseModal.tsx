@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, AlertCircle, Loader2, ShieldCheck, Smartphone } from "lucide-react";
+import {
+  ArrowLeft,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  ShieldCheck,
+  Smartphone,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { OperatorLogo, operatorLabels, type OperatorId } from "@/components/OperatorLogo";
